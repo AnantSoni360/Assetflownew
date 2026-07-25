@@ -1,0 +1,195 @@
+// 1. Initialize Supabase
+let supabaseClient = null;
+try {
+    const supabaseUrl = 'https://nphdpclywjsmqowbvegy.supabase.co';
+    const supabaseKey = 'sb_publishable_z-wkJgi8fRnyUblLwyu-Fg_v5TlVaG_';
+    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+} catch (e) {
+    console.error("Supabase failed to initialize:", e);
+}
+
+let currentUser = null;
+
+// 2. Session Management
+function checkSession() {
+    const session = localStorage.getItem('assetflow_session');
+    if (!session) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    currentUser = JSON.parse(session);
+    
+    // Ensure only Employees access this page
+    if (currentUser.role !== 'Employee') {
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    document.getElementById('user-name-display').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+    document.getElementById('welcome-message').textContent = `Welcome, ${currentUser.first_name}!`;
+    document.getElementById('sidebar-company-name').textContent = currentUser.company_name;
+    document.getElementById('user-avatar').textContent = currentUser.first_name.charAt(0).toUpperCase();
+    
+    return true;
+}
+
+function logout() {
+    localStorage.removeItem('assetflow_session');
+    window.location.href = 'login.html';
+}
+
+// 3. Tab Switching
+function switchTab(tabId, element) {
+    // Hide all panes
+    document.querySelectorAll('.content-pane').forEach(p => p.classList.remove('active'));
+    // Deactivate all tabs
+    document.querySelectorAll('.menu-item').forEach(t => t.classList.remove('active'));
+    
+    // Show selected pane
+    document.getElementById(`pane-${tabId}`).classList.add('active');
+    
+    // Activate selected tab (if element provided, else find it by href/onclick string)
+    if(element) {
+        element.classList.add('active');
+    }
+}
+
+// 4. Data Fetching
+async function loadPortalData() {
+    if (!checkSession()) return;
+    
+    const workspaceId = currentUser.workspace_id;
+    const userId = currentUser.id;
+
+    // Fetch My Tickets
+    const { data: tickets, error: ticketsError } = await supabaseClient.rpc('get_employee_tickets', {
+        p_user_id: userId,
+        p_workspace_id: workspaceId
+    });
+        
+    if (!ticketsError && tickets) {
+        renderTicketsTable(tickets);
+        const openTickets = tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length;
+        document.getElementById('stat-tickets').textContent = openTickets;
+    }
+
+    // Fetch My Assets
+    const { data: assets, error: assetsError } = await supabaseClient.rpc('get_employee_assets', {
+        p_user_id: userId,
+        p_workspace_id: workspaceId
+    });
+        
+    if (!assetsError && assets) {
+        renderAssetsTable(assets);
+        document.getElementById('stat-assets').textContent = assets.length;
+    }
+}
+
+// 5. Rendering Functions
+function renderTicketsTable(tickets) {
+    const tbody = document.getElementById('tickets-table-body');
+    if (tickets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">You have no support tickets.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = tickets.map(t => {
+        let statusBadge = 'badge-gray';
+        if (t.status === 'Open') statusBadge = 'badge-yellow';
+        else if (t.status === 'In Progress') statusBadge = 'badge-blue';
+        else if (t.status === 'Resolved') statusBadge = 'badge-green';
+
+        let prioColor = t.priority === 'Critical' ? '#991b1b' : (t.priority === 'High' ? '#c2410c' : 'inherit');
+        
+        return `
+            <tr>
+                <td><strong>${t.ticket_id_tag}</strong></td>
+                <td style="max-width: 320px;">
+                    <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">${t.issue_type}</div>
+                    ${t.description ? `<div style="font-size: 0.85rem; color: #475569; line-height: 1.4; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #3b82f6; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">${t.description}</div>` : `<div style="font-size: 0.8rem; color: #94a3b8; font-style: italic;">No description provided</div>`}
+                </td>
+                <td style="color: ${prioColor}; font-weight: ${t.priority === 'Critical' ? 'bold' : 'normal'}">${t.priority}</td>
+                <td><span class="badge ${statusBadge}">${t.status}</span></td>
+                <td>${new Date(t.created_at).toLocaleDateString()}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderAssetsTable(assets) {
+    const tbody = document.getElementById('assets-table-body');
+    if (assets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">You have no assigned assets.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = assets.map(a => `
+        <tr>
+            <td><strong>${a.asset_id_tag}</strong></td>
+            <td>${a.asset_type}</td>
+            <td>${a.brand} - ${a.model}</td>
+            <td>${a.serial_number}</td>
+        </tr>
+    `).join('');
+}
+
+// 6. Raise Ticket Modal Logic
+function openRaiseTicketModal() {
+    document.getElementById('raiseTicketModal').classList.add('active');
+    document.getElementById('ticket-error').style.display = 'none';
+}
+
+function closeRaiseTicketModal() {
+    document.getElementById('raiseTicketModal').classList.remove('active');
+    document.getElementById('raise-ticket-form').reset();
+}
+
+// 7. Submit Ticket Form
+document.getElementById('raise-ticket-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const issueType = document.getElementById('t-issue').value;
+    const priority = document.getElementById('t-priority').value;
+    const desc = document.getElementById('t-desc').value;
+    
+    const btn = document.getElementById('submit-ticket-btn');
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+    
+    try {
+        const { error } = await supabaseClient.rpc('raise_ticket', {
+            p_user_id: currentUser.id,
+            p_workspace_id: currentUser.workspace_id,
+            p_issue_type: issueType,
+            p_description: desc,
+            p_priority: priority
+        });
+
+        if (error) throw error;
+        
+        closeRaiseTicketModal();
+        alert("Ticket submitted successfully!");
+        loadPortalData(); // Reload their data
+        
+    } catch (err) {
+        document.getElementById('ticket-error').style.display = 'block';
+        document.getElementById('ticket-error-msg').textContent = err.message;
+    } finally {
+        btn.textContent = 'Submit Ticket';
+        btn.disabled = false;
+    }
+});
+
+// Initialize on page load
+window.onload = () => {
+    loadPortalData();
+    
+    // Real-Time Subscription
+    supabaseClient
+        .channel('public:tickets')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, payload => {
+            console.log('Real-Time update received!', payload);
+            loadPortalData(); // Refresh UI instantly
+        })
+        .subscribe();
+};

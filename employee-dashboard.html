@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Portal - AssetFlow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="logo">
+                <span class="icon">🌿</span> AssetFlow
+            </a>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-item active" onclick="switchTab('overview', this)" id="tab-overview">
+                <span>📊</span> Overview
+            </div>
+            <div class="menu-item" onclick="switchTab('tickets', this)" id="tab-tickets">
+                <span>🎫</span> My Tickets
+            </div>
+            <div class="menu-item" onclick="switchTab('assets', this)" id="tab-assets">
+                <span>💻</span> My Assets
+            </div>
+        </div>
+
+        <div class="user-profile-section">
+            <div class="avatar" id="user-avatar">?</div>
+            <div class="user-info">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">Employee</div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="logout()" style="padding: 0.25rem 0.5rem; border: none; font-size: 1rem;" title="Logout">🚪</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-title" id="header-title">Employee Overview</div>
+            <div id="sidebar-company-name" style="font-weight: 600; color: var(--text-muted);"></div>
+        </header>
+
+        <!-- Overview Pane -->
+        <div class="content-pane active" id="pane-overview">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">My Assigned Assets</div>
+                    <div class="stat-value" id="stat-assets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">My Open Tickets</div>
+                    <div class="stat-value" id="stat-tickets">0</div>
+                </div>
+            </div>
+            
+            <div class="welcome-banner">
+                <h3 id="welcome-message">Welcome to your Portal</h3>
+                <p>Manage your assigned hardware and raise support tickets seamlessly.</p>
+                <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="openRaiseTicketModal()">Raise a Support Ticket</button>
+            </div>
+        </div>
+
+        <!-- My Tickets Pane -->
+        <div class="content-pane" id="pane-tickets">
+            <div class="table-container">
+                <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin:0;">My Support Tickets</h3>
+                    <button class="btn btn-primary btn-small" onclick="openRaiseTicketModal()">Raise Ticket</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Issue & Description</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Date Reported</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-table-body">
+                        <tr><td colspan="5" style="text-align: center;">Loading your tickets...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- My Assets Pane -->
+        <div class="content-pane" id="pane-assets">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 style="margin:0;">My Assigned Hardware</h3>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Asset Tag</th>
+                            <th>Type</th>
+                            <th>Brand & Model</th>
+                            <th>Serial Number</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-table-body">
+                        <tr><td colspan="4" style="text-align: center;">Loading your assets...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Raise Ticket Modal -->
+    <div class="modal-overlay" id="raiseTicketModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0;">Raise a Support Ticket</h2>
+                <button class="close-modal" onclick="closeRaiseTicketModal()">×</button>
+            </div>
+            
+            <div class="error-alert" id="ticket-error" style="display: none; background-color: #fee2e2; border: 1px solid #fecaca; padding: 1.25rem; margin-bottom: 1.5rem; border-radius: var(--radius-sm);">
+                <p id="ticket-error-msg" style="color: #991b1b; margin: 0; font-weight: 500; font-size: 0.95rem;">Error</p>
+            </div>
+
+            <form id="raise-ticket-form">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main);">Issue Type</label>
+                    <select id="t-issue" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" required>
+                        <option value="" disabled selected>Select issue type</option>
+                        <option value="Hardware Issue">Hardware Issue</option>
+                        <option value="Software Issue">Software Issue</option>
+                        <option value="Network/Internet">Network / Internet</option>
+                        <option value="Access Request">Access Request</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main);">Priority</label>
+                    <select id="t-priority" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" required>
+                        <option value="Low">Low (No rush)</option>
+                        <option value="Medium" selected>Medium (Standard)</option>
+                        <option value="High">High (Blocking some work)</option>
+                        <option value="Critical">Critical (Cannot work at all)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main);">Description</label>
+                    <textarea id="t-desc" rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; resize: vertical;" placeholder="Please describe your issue in detail..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="submit-ticket-btn">Submit Ticket</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="employee.js"></script>
+</body>
+</html>

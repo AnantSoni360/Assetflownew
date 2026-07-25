@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AssetFlow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="auth-page">
+
+    <!-- Top Navigation -->
+    <div class="auth-nav">
+        <a href="index.html" class="logo">
+            <span class="icon">🌿</span> AssetFlow
+        </a>
+        <a href="index.html" class="back-link">Back to Home</a>
+    </div>
+
+    <div class="auth-container">
+        <div class="card-slider" id="cardSlider">
+            
+            <!-- Step 1: Workspace Name -->
+            <div class="auth-card step-card active" id="step1">
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Enter your workspace to continue.</p>
+                
+                <!-- Error Alert -->
+                <div class="error-alert" id="workspace-error">
+                    <h4 id="workspace-error-title">Error</h4>
+                    <p id="workspace-error-msg">Workspace not found.</p>
+                </div>
+
+                <form onsubmit="goToStep(event, 'step1', 'step2')">
+                    <div class="input-group">
+                        <label for="login-company-name">Company Name</label>
+                        <select id="login-company-name" required>
+                            <option value="" disabled selected>Loading workspaces...</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-btn btn-animated">Continue ➔</button>
+                </form>
+            </div>
+            
+            <!-- Step 2: Credentials -->
+            <div class="auth-card step-card next-card" id="step2">
+                <h2 id="display-company-name">Company Name</h2>
+                <p class="subtitle">Sign in to your account.</p>
+                
+                <!-- Error Alert -->
+                <div class="error-alert" id="login-error">
+                    <h4>Authentication Failed</h4>
+                    <p id="login-error-msg">Invalid email or password.</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="login-email">Work Email</label>
+                        <input type="email" id="login-email" placeholder="john@acme.com" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="login-password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="login-password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePassword('login-password', 'toggle-icon-login')">
+                                <span id="toggle-icon-login">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-top:2rem;">
+                        <button type="button" class="btn btn-secondary" style="padding:1rem;" onclick="goToStep(null, 'step2', 'step1', true)">⬅ Back</button>
+                        <button type="submit" id="login-btn" class="btn btn-primary btn-animated" style="flex:1; border-radius:12px;">Login ➔</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+
+        // Initialize Supabase Client
+        let supabaseClient = null;
+        try {
+            const supabaseUrl = 'https://nphdpclywjsmqowbvegy.supabase.co';
+            const supabaseKey = 'sb_publishable_z-wkJgi8fRnyUblLwyu-Fg_v5TlVaG_';
+            supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        } catch (e) {
+            console.error("Supabase failed to initialize:", e);
+        }
+
+        function goToStep(e, currentId, nextId, isBack = false) {
+            if (e) e.preventDefault();
+            
+            const currentCard = document.getElementById(currentId);
+            const nextCard = document.getElementById(nextId);
+            
+            // If moving to step 2, update the title
+            if (!isBack && nextId === 'step2') {
+                const company = document.getElementById('login-company-name').value;
+                document.getElementById('display-company-name').textContent = company;
+                // Clear any previous errors
+                document.getElementById('workspace-error').classList.remove('active');
+                document.getElementById('login-error').classList.remove('active');
+            }
+
+            if (isBack) {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('next-card');
+                nextCard.classList.remove('prev-card');
+                nextCard.classList.add('active');
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('prev-card');
+                nextCard.classList.remove('next-card');
+                nextCard.classList.add('active');
+            }
+        }
+
+        // Fetch workspaces on load
+        async function loadWorkspaces() {
+            const selectElement = document.getElementById('login-company-name');
+            try {
+                const { data, error } = await supabaseClient.rpc('get_workspaces');
+                
+                if (error) throw error;
+                
+                selectElement.innerHTML = '<option value="" disabled selected>Select your workspace</option>';
+                
+                if (data && data.length > 0) {
+                    data.forEach(workspace => {
+                        const option = document.createElement('option');
+                        option.value = workspace.company_name;
+                        option.textContent = workspace.company_name;
+                        selectElement.appendChild(option);
+                    });
+                } else {
+                    selectElement.innerHTML = '<option value="" disabled selected>No workspaces found</option>';
+                }
+            } catch (err) {
+                console.error("Failed to load workspaces:", err);
+                selectElement.innerHTML = '<option value="" disabled selected>Error loading workspaces</option>';
+            }
+        }
+
+        // Run when page loads
+        document.addEventListener('DOMContentLoaded', loadWorkspaces);
+
+        // Login Logic
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            document.getElementById('login-error').classList.remove('active');
+            
+            const companyName = document.getElementById('login-company-name').value;
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+
+            btn.textContent = 'Verifying...';
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+
+            try {
+                // Call the secure RPC function in Supabase
+                const { data, error } = await supabaseClient.rpc('login_user', {
+                    p_company_name: companyName,
+                    p_email: email,
+                    p_password: password
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // If successful, data contains the user object
+                const user = data;
+                
+                // Store session securely in local storage
+                localStorage.setItem('assetflow_session', JSON.stringify({
+                    id: user.id,
+                    workspace_id: user.workspace_id,
+                    email: user.email,
+                    role: user.role,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    company_name: companyName
+                }));
+
+                // Redirect based on role
+                if (user.role === 'Admin' || user.role === 'Super Admin') {
+                    window.location.href = 'admin-dashboard.html';
+                } else if (user.role === 'Employee') {
+                    window.location.href = 'employee-dashboard.html';
+                } else if (user.role === 'Engineer') {
+                    window.location.href = 'engineer-dashboard.html';
+                } else {
+                    alert(`Welcome ${user.first_name}! You are logged in as a ${user.role}. Your specific dashboard is coming soon!`);
+                }
+
+            } catch (err) {
+                // Handle Errors gracefully
+                if (err.message && err.message.includes('Workspace not found')) {
+                    // Send them back to step 1
+                    goToStep(null, 'step2', 'step1', true);
+                    const wError = document.getElementById('workspace-error');
+                    wError.classList.add('active');
+                    document.getElementById('workspace-error-msg').textContent = `We couldn't find a workspace for "${companyName}". Please check the spelling.`;
+                } else {
+                    const lError = document.getElementById('login-error');
+                    lError.classList.add('active');
+                    document.getElementById('login-error-msg').textContent = err.message || 'Invalid email or password.';
+                }
+            } finally {
+                btn.textContent = 'Login ➔';
+                btn.style.opacity = '1';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

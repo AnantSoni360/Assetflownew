@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineer Dashboard - AssetFlow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="logo">
+                <span class="icon">🌿</span> AssetFlow
+            </a>
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-item active" onclick="switchTab('overview')" id="tab-overview">
+                <span>📊</span> Dashboard
+            </div>
+            <div class="menu-item" onclick="switchTab('tickets')" id="tab-tickets">
+                <span>🎫</span> Tickets Workspace
+            </div>
+        </div>
+
+        <div class="user-profile-section">
+            <div class="avatar" id="user-avatar">?</div>
+            <div class="user-info">
+                <div class="user-name" id="sidebar-user-name">Loading...</div>
+                <div class="user-role" id="sidebar-company-name">Loading...</div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="logout()" style="padding: 0.25rem 0.5rem; border: none; font-size: 1rem;" title="Logout">🚪</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-title" id="header-title">Engineer Workspace</div>
+        </header>
+
+        <!-- Overview Pane -->
+        <div class="content-pane active" id="pane-overview">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">My Assigned Tickets</div>
+                    <div class="stat-value" id="stat-my-tickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Unassigned Queue</div>
+                    <div class="stat-value" id="stat-unassigned">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">My Resolved Today</div>
+                    <div class="stat-value" id="stat-resolved">0</div>
+                </div>
+            </div>
+            
+            <div class="welcome-banner" style="margin-bottom: 2rem;">
+                <h3 id="welcome-message">Welcome to your Dashboard</h3>
+                <p>Manage your assigned tickets and pull from the unassigned queue.</p>
+            </div>
+
+            <!-- Smart To-Do List Widget -->
+            <div class="widget-card widget-action">
+                <h4 class="widget-title">Smart To-Do List (Your Priorities)</h4>
+                <div id="todo-list" class="action-list">
+                    <div class="empty-state">Loading tasks...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Pane -->
+        <div class="content-pane" id="pane-tickets">
+            <div class="table-container" style="background: var(--bg-white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden;">
+                <div class="table-header" style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem; padding: 1.5rem; border-bottom: 1px solid var(--border-light); background: #f8fafc;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <h3 style="margin:0; font-size: 1.25rem; color: var(--primary-dark);">Ticket Management</h3>
+                        
+                        <div class="filter-controls" style="display: flex; gap: 0.8rem; align-items: center;">
+                            <div class="filter-group">
+                                <select id="ticket-status-filter" class="modern-select" onchange="filterTickets()">
+                                    <option value="All">All Statuses</option>
+                                    <option value="Open">Open</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Resolved">Resolved</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                                
+                                <select id="ticket-priority-filter" class="modern-select" onchange="filterTickets()">
+                                    <option value="All">All Priorities</option>
+                                    <option value="Critical">Critical</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                                
+                                <button class="btn btn-secondary btn-small filter-pill" id="filter-unassigned" onclick="toggleUnassignedFilter()">Unassigned Queue</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="search-box" style="width: 100%;">
+                        <span>🔍</span>
+                        <input type="text" id="ticket-search" placeholder="Search ID, Issue, or Email..." onkeyup="filterTickets()" style="width: 100%; border: none; background: transparent; outline: none; padding: 0.5rem;">
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Issue & Description</th>
+                            <th>Reported By</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-table-body">
+                        <tr><td colspan="6" style="text-align: center;">Loading tickets...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="engineer.js"></script>
+</body>
+</html>

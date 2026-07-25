@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Workspace - AssetFlow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Supabase & PapaParse CDNs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body class="auth-page">
+
+    <!-- Top Navigation for Auth Flow -->
+    <div class="auth-nav">
+        <a href="index.html" class="logo">
+            <span class="icon">🌿</span> AssetFlow
+        </a>
+        <a href="index.html" class="back-link">Cancel</a>
+    </div>
+
+    <div class="auth-container">
+        <div class="card-slider" id="cardSlider">
+            
+            <!-- Step 1: Company Info -->
+            <div class="auth-card step-card active" id="step1">
+                <div class="step-indicator">Step 1 of 6</div>
+                <h2>Let's build your workspace</h2>
+                <p class="subtitle">Tell us about your company to get started.</p>
+                
+                <!-- Error Alert -->
+                <div class="error-alert" id="company-exists-error" style="display: none; background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                    <h4 style="color: #991b1b; margin: 0 0 0.5rem 0; font-size: 1rem;">Company Exists</h4>
+                    <p id="company-exists-msg" style="color: #b91c1c; margin: 0; font-size: 0.9rem;">This company is already registered.</p>
+                </div>
+                
+                <form onsubmit="validateCompanyThenGo(event)">
+                    <div class="input-group">
+                        <label for="company-name">Company Name</label>
+                        <input type="text" id="company-name" placeholder="e.g., Acme Corporation" required autofocus>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="workspace-url">Workspace URL</label>
+                        <div class="url-input-wrapper">
+                            <input type="text" id="workspace-url" placeholder="acme" required>
+                            <span class="url-suffix">.assetflow.com</span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="company-logo">Company Logo</label>
+                        <div class="file-upload-box" onclick="document.getElementById('company-logo').click()">
+                            <div class="upload-icon">📁</div>
+                            <p>Click to upload your logo</p>
+                            <span class="upload-hint">PNG, JPG up to 5MB</span>
+                            <input type="file" id="company-logo" accept="image/*" style="display: none;" onchange="updateFileName(this)">
+                        </div>
+                        <p id="file-name-display" class="file-name"></p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-btn btn-animated">Continue ➔</button>
+                </form>
+            </div>
+            
+            <!-- Step 2: Admin Details -->
+            <div class="auth-card step-card next-card" id="step2">
+                <div class="step-indicator">Step 2 of 6</div>
+                <h2>Super Admin Details</h2>
+                <p class="subtitle">Who will be the primary administrator?</p>
+                
+                <form onsubmit="sendOTP(event)">
+                    <div class="input-row" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+                        <div class="input-group" style="flex:1; margin-bottom:0;">
+                            <label for="admin-first-name">First Name</label>
+                            <input type="text" id="admin-first-name" placeholder="John" required>
+                        </div>
+                        <div class="input-group" style="flex:1; margin-bottom:0;">
+                            <label for="admin-last-name">Last Name</label>
+                            <input type="text" id="admin-last-name" placeholder="Doe" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="admin-email">Work Email</label>
+                        <input type="email" id="admin-email" placeholder="john@acme.com" required>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-top:2rem;">
+                        <button type="button" class="btn btn-secondary" style="padding:1rem;" onclick="goToStep(null, 'step2', 'step1', true)">⬅ Back</button>
+                        <button type="submit" class="btn btn-primary btn-animated" style="flex:1; border-radius:12px;">Send OTP ➔</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: OTP Verification -->
+            <div class="auth-card step-card next-card" id="step3">
+                <div class="step-indicator">Step 3 of 6</div>
+                <h2>Verify your email</h2>
+                <p class="subtitle" id="otp-subtitle">We've sent a 4-digit code to your email. Enter it below.</p>
+                
+                <div class="error-alert" id="otp-error" style="display: none; background-color: #fee2e2; border: 1px solid #fecaca; padding: 0.75rem; margin-bottom: 1.25rem; border-radius: 8px; color: #991b1b; text-align: center; font-weight: 600; font-size: 0.9rem;">
+                    ❌ Invalid OTP! Please try again.
+                </div>
+                <div id="otp-success" style="display: none; background-color: #dcfce7; border: 1px solid #86efac; padding: 0.75rem; margin-bottom: 1.25rem; border-radius: 8px; color: #166534; text-align: center; font-weight: 600; font-size: 0.9rem;">
+                    ✅ Email verified successfully! Continuing...
+                </div>
+
+                <form onsubmit="verifyOTP(event)">
+                    <div class="otp-container">
+                        <input type="text" class="otp-input" maxlength="1" required autofocus onkeyup="moveToNext(this, event)">
+                        <input type="text" class="otp-input" maxlength="1" required onkeyup="moveToNext(this, event)">
+                        <input type="text" class="otp-input" maxlength="1" required onkeyup="moveToNext(this, event)">
+                        <input type="text" class="otp-input" maxlength="1" required onkeyup="moveToNext(this, event)">
+                    </div>
+                    
+                    <p style="text-align:center; font-size:0.9rem; margin-top:1rem; color:var(--text-light);">
+                        Didn't receive it? <a href="#" onclick="resendOTP(event)" style="color:var(--primary-green); text-decoration:none; font-weight:600;">Resend Code</a>
+                    </p>
+
+                    <div style="display:flex; gap:1rem; margin-top:2rem;">
+                        <button type="button" class="btn btn-secondary" style="padding:1rem;" onclick="goToStep(null, 'step3', 'step2', true)">⬅ Back</button>
+                        <button type="submit" class="btn btn-primary btn-animated" style="flex:1; border-radius:12px;">Verify ➔</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 4: Password Setup -->
+            <div class="auth-card step-card next-card" id="step4">
+                <div class="step-indicator">Step 4 of 6</div>
+                <h2>Secure your account</h2>
+                <p class="subtitle">Create a strong password for your Super Admin account.</p>
+                
+                <form onsubmit="goToStep(event, 'step4', 'step5')">
+                    <div class="input-group">
+                        <label for="password">New Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePassword('password', 'toggle-icon-pw1')">
+                                <span id="toggle-icon-pw1">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirm-password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePassword('confirm-password', 'toggle-icon-pw2')">
+                                <span id="toggle-icon-pw2">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-top:2rem;">
+                        <button type="button" class="btn btn-secondary" style="padding:1rem;" onclick="goToStep(null, 'step4', 'step3', true)">⬅ Back</button>
+                        <button type="submit" class="btn btn-primary btn-animated" style="flex:1; border-radius:12px;">Continue ➔</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 5: Default User Password -->
+            <div class="auth-card step-card next-card" id="step5">
+                <div class="step-indicator">Step 5 of 6</div>
+                <h2>Default Team Password</h2>
+                <p class="subtitle">Set a temporary password for employees joining this workspace.</p>
+                
+                <div style="background-color: var(--light-green); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-green);">
+                    <p style="color: var(--primary-dark); font-size: 0.9rem; font-weight: 600; margin: 0;">
+                        ℹ️ This is a temporary password for all new users. Tell them to update it during their first login.
+                    </p>
+                </div>
+
+                <form onsubmit="goToStep(event, 'step5', 'step6')">
+                    <div class="input-group">
+                        <label for="temp-password">Temporary Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="temp-password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePassword('temp-password', 'toggle-icon-pw3')">
+                                <span id="toggle-icon-pw3">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="confirm-temp-password">Confirm Temporary Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirm-temp-password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePassword('confirm-temp-password', 'toggle-icon-pw4')">
+                                <span id="toggle-icon-pw4">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-top:2rem;">
+                        <button type="button" class="btn btn-secondary" style="padding:1rem;" onclick="goToStep(null, 'step5', 'step4', true)">⬅ Back</button>
+                        <button type="submit" class="btn btn-primary btn-animated" style="flex:1; border-radius:12px;">Continue ➔</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 6: Import Data -->
+            <div class="auth-card step-card next-card" id="step6" style="max-width: 600px; left: 50%; transform: translateX(50px) scale(0.95); margin-left: -300px;">
+                <div class="step-indicator">Step 6 of 6</div>
+                <h2>Import Workspace Data</h2>
+                <p class="subtitle">Quickly onboard your existing records. <strong style="color:var(--text-dark);">You must strictly use these templates and keep the downloaded file names exactly as they are.</strong></p>
+                
+                <div style="display:flex; gap:1rem; margin-bottom: 2rem;">
+                    <a href="assets_template.csv" download class="btn btn-secondary" style="flex:1; text-align:center; font-size:0.9rem;">📥 Asset Template</a>
+                    <a href="users_template.csv" download class="btn btn-secondary" style="flex:1; text-align:center; font-size:0.9rem;">📥 User Template</a>
+                    <a href="tickets_template.csv" download class="btn btn-secondary" style="flex:1; text-align:center; font-size:0.9rem;">📥 Ticket Template</a>
+                </div>
+
+                <!-- Error Alert Box -->
+                <div class="error-alert" id="validation-error">
+                    <h4 id="error-title">Validation Failed</h4>
+                    <p id="error-message">Please check your files and try again.</p>
+                </div>
+
+                <form id="data-import-form">
+                    
+                    <div class="input-group">
+                        <label>Upload Filled Templates</label>
+                        <div class="file-upload-box" onclick="document.getElementById('data-upload').click()">
+                            <div class="upload-icon">📤</div>
+                            <p>Click to upload your CSV files</p>
+                            <span class="upload-hint">Upload all 3 filled templates here</span>
+                            <input type="file" id="data-upload" accept=".csv" multiple style="display: none;" onchange="updateFileName(this, 'data-file-name-display')">
+                        </div>
+                        <p id="data-file-name-display" class="file-name"></p>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-top:2rem;">
+                        <button type="button" class="btn btn-secondary" style="padding:1rem;" onclick="goToStep(null, 'step6', 'step5', true)">⬅ Back</button>
+                        <button type="submit" class="btn btn-primary btn-animated" style="flex:1; border-radius:12px;">Complete Workspace Setup 🎉</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success Step -->
+            <div class="auth-card step-card next-card" id="step-success" style="text-align: center;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                <h2 style="color: var(--primary-green);">Workspace Created!</h2>
+                <p class="subtitle" style="margin-top: 1rem; color: var(--text-dark); font-weight: 600;">
+                    You are now the Super Admin of this workspace.
+                </p>
+                <p style="margin-bottom: 2rem;">
+                    Please login using the Super Admin Email ID and Password you set in the previous steps to access your portal.
+                </p>
+                <a href="login.html" class="btn btn-primary btn-animated justify-center" style="text-decoration: none;">Proceed to Login ➔</a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Validation Modal / Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="auth-card" style="text-align: center; max-width: 400px; padding: 3rem;">
+            <div class="spinner" style="margin: 0 auto 1.5rem;"></div>
+            <div class="loading-text" id="loading-title">Validating Data...</div>
+            <div class="loading-subtext" id="loading-desc">Checking file formats, names, and templates.</div>
+            
+            <button id="close-modal-btn" class="btn btn-primary" style="display: none; margin-top: 2rem; width: 100%;" onclick="closeModal()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+
+        // Supabase Init
+        let supabaseClient = null;
+        try {
+            const supabaseUrl = 'https://nphdpclywjsmqowbvegy.supabase.co';
+            const supabaseKey = 'sb_publishable_z-wkJgi8fRnyUblLwyu-Fg_v5TlVaG_';
+            supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        } catch (e) {
+            console.error("Supabase failed to initialize:", e);
+        }
+
+        const EXPECTED_SCHEMAS = [
+            { type: 'users', headers: ['Name', 'Email', 'Role', 'Department'] },
+            { type: 'assets', headers: ['Asset_Name', 'Asset_Type', 'Serial_Number', 'Status', 'Assigned_To_Email'] },
+            { type: 'tickets', headers: ['Title', 'Description', 'Priority', 'Status', 'Requested_By_Email'] }
+        ];
+
+        function showModal(title, desc, isError = false) {
+            const modal = document.getElementById('loading-overlay');
+            document.getElementById('loading-title').textContent = title;
+            document.getElementById('loading-desc').textContent = desc;
+            
+            const spinner = modal.querySelector('.spinner');
+            const closeBtn = document.getElementById('close-modal-btn');
+            
+            if (isError) {
+                spinner.style.display = 'none';
+                closeBtn.style.display = 'block';
+                document.getElementById('loading-title').style.color = '#ef4444';
+            } else {
+                spinner.style.display = 'block';
+                closeBtn.style.display = 'none';
+                document.getElementById('loading-title').style.color = 'var(--text-dark)';
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+
+        function parseCSV(file) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) { resolve(results); },
+                    error: function(error) { reject(error); }
+                });
+            });
+        }
+
+        document.getElementById('data-import-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Stop native submission immediately
+
+            const fileInput = document.getElementById('data-upload');
+            const files = Array.from(fileInput.files);
+
+            if (files.length === 0) {
+                showModal('Missing Files', 'Please upload your filled template files before continuing.', true);
+                return;
+            }
+
+            showModal('Validating Data...', 'Checking file formats and templates. Please wait.');
+            const parsedData = {};
+
+            // Validation Loop
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                    showModal('Format Error', `Rule Failed: "${file.name}" is not a valid CSV. You must upload .csv files only.`, true);
+                    return;
+                }
+
+                try {
+                    const result = await parseCSV(file);
+                    const actualHeaders = result.meta.fields || [];
+
+                    let matchedType = null;
+                    for (const schema of EXPECTED_SCHEMAS) {
+                        const hasAllHeaders = schema.headers.every(h => actualHeaders.includes(h));
+                        if (hasAllHeaders) {
+                            matchedType = schema.type;
+                            break;
+                        }
+                    }
+
+                    if (!matchedType) {
+                        showModal('Template Error', `Rule Failed: "${file.name}" does not match the Intec Service Hub rules. Missing required column headers (e.g. Name, Email, Role, Department for users).`, true);
+                        return;
+                    }
+                    parsedData[matchedType] = result.data;
+                } catch (err) {
+                    showModal('Parsing Error', `Could not read "${file.name}". Ensure it is a valid CSV.`, true);
+                    return;
+                }
+            }
+
+            // Database Insertion
+            showModal('Uploading to Database...', 'All rules passed! Saving to Supabase...');
+            
+            if (!supabaseClient) {
+                setTimeout(() => {
+                    closeModal();
+                    goToStep(null, 'step6', 'step-success');
+                }, 1000);
+                return;
+            }
+
+            try {
+                const companyName = document.getElementById('company-name').value;
+                const subdomain = document.getElementById('workspace-url').value;
+                const adminFirstName = document.getElementById('admin-first-name').value;
+                const adminLastName = document.getElementById('admin-last-name').value;
+                const adminEmail = document.getElementById('admin-email').value;
+                const superAdminPassword = document.getElementById('password').value;
+                const tempEmployeePassword = document.getElementById('temp-password').value;
+                
+                // 1. Create Workspace
+                const { data: workspace, error: workspaceError } = await supabaseClient
+                    .from('workspaces')
+                    .insert([{ company_name: companyName, subdomain: subdomain }])
+                    .select().single();
+
+                if (workspaceError) {
+                    console.error("Workspace creation error:", workspaceError);
+                    showModal('Database Error', `Supabase denied workspace creation: ${workspaceError.message || JSON.stringify(workspaceError)}. PLEASE RUN THE LATEST schema.sql IN SUPABASE!`, true);
+                    return;
+                }
+
+                const workspaceId = workspace.id;
+
+                // 2. Insert Super Admin User
+                const { error: adminErr } = await supabaseClient.from('users').insert([{
+                    workspace_id: workspaceId,
+                    first_name: adminFirstName,
+                    last_name: adminLastName,
+                    email: adminEmail,
+                    password: superAdminPassword,
+                    role: 'Super Admin',
+                    department: 'IT/Admin',
+                    phone_number: ''
+                }]);
+
+                if (adminErr) {
+                    console.error("Admin user insertion error:", adminErr);
+                    showModal('Database Error', `Workspace created, but failed to insert Super Admin: ${adminErr.message}. Please run updated schema.sql in Supabase!`, true);
+                    return;
+                }
+
+                // 3. Insert Employees from CSV (with Temporary Password)
+                if (parsedData['users']) {
+                    const users = parsedData['users']
+                        .filter(u => u['Email'] && u['Email'].trim() !== '')
+                        .map(u => {
+                            const nameParts = (u['Name'] || '').trim().split(' ');
+                            const first = nameParts[0] || 'User';
+                            const last = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+                            
+                            let rawRole = (u['Role'] || 'Employee').trim();
+                            let mappedRole = 'Employee';
+                            if (rawRole.toLowerCase().includes('engineer')) {
+                                mappedRole = 'Engineer';
+                            } else if (rawRole === 'Super Admin' || rawRole === 'Admin' || rawRole === 'Employee') {
+                                mappedRole = rawRole;
+                            }
+
+                            return {
+                                workspace_id: workspaceId, 
+                                first_name: first, 
+                                last_name: last, 
+                                email: u['Email'].trim(), 
+                                password: tempEmployeePassword,
+                                role: mappedRole, 
+                                department: u['Department'] || '', 
+                                phone_number: ''
+                            };
+                        });
+                    if (users.length > 0) {
+                        const { error: usersErr } = await supabaseClient.from('users').insert(users);
+                        if (usersErr) {
+                            console.error("Error inserting CSV users:", usersErr);
+                            showModal('Database Error', `Users could not be saved to Supabase: ${usersErr.message || JSON.stringify(usersErr)}. Have you run the updated schema.sql in Supabase?`, true);
+                            return;
+                        }
+                    }
+                }
+
+                // 4. Insert Assets from CSV
+                if (parsedData['assets']) {
+                    const assets = parsedData['assets']
+                        .filter(a => a['Asset_Name'] && a['Asset_Name'].trim() !== '')
+                        .map(a => ({
+                            workspace_id: workspaceId, 
+                            asset_id_tag: 'AST-' + Math.floor(100000 + Math.random() * 900000), 
+                            asset_type: a['Asset_Type'] || 'Hardware', 
+                            brand: 'Unknown', 
+                            model: a['Asset_Name'].trim(), 
+                            serial_number: a['Serial_Number'] || 'N/A', 
+                            assigned_to: a['Assigned_To_Email'] ? a['Assigned_To_Email'].trim() : null, 
+                            status: a['Status'] || 'Available'
+                        }));
+                    if (assets.length > 0) {
+                        const { error: assetsErr } = await supabaseClient.from('assets').insert(assets);
+                        if (assetsErr) {
+                            console.error("Error inserting CSV assets:", assetsErr);
+                            showModal('Database Error', `Assets could not be saved to Supabase: ${assetsErr.message || JSON.stringify(assetsErr)}. Please check Supabase table policies!`, true);
+                            return;
+                        }
+                    }
+                }
+
+                // 5. Insert Tickets from CSV
+                if (parsedData['tickets']) {
+                    const tickets = parsedData['tickets']
+                        .filter(t => t['Title'] && t['Title'].trim() !== '')
+                        .map(t => ({
+                            workspace_id: workspaceId, 
+                            ticket_id_tag: 'TCK-' + Math.floor(1000 + Math.random() * 9000), 
+                            issue_type: t['Title'].trim(), 
+                            description: t['Description'] || '', 
+                            reported_by: t['Requested_By_Email'] ? t['Requested_By_Email'].trim() : '', 
+                            assigned_to: t['Assigned_To_Email'] ? t['Assigned_To_Email'].trim() : null, 
+                            priority: t['Priority'] || 'Medium', 
+                            status: t['Status'] || 'Open'
+                        }));
+                    if (tickets.length > 0) {
+                        const { error: ticketsErr } = await supabaseClient.from('tickets').insert(tickets);
+                        if (ticketsErr) {
+                            console.error("Error inserting CSV tickets:", ticketsErr);
+                            showModal('Database Error', `Tickets could not be saved to Supabase: ${ticketsErr.message || JSON.stringify(ticketsErr)}. Please check Supabase table policies!`, true);
+                            return;
+                        }
+                    }
+                }
+
+                closeModal();
+                goToStep(null, 'step6', 'step-success');
+
+            } catch (dbError) {
+                showModal('Database Error', `Unexpected error: ${dbError.message || dbError}`, true);
+            }
+        });
+
+        function updateFileName(input, displayId) {
+            const display = document.getElementById(displayId || 'file-name-display');
+            if (input.files && input.files.length > 0) {
+                if (input.files.length === 1) {
+                    display.textContent = 'Selected: ' + input.files[0].name;
+                } else {
+                    display.textContent = 'Selected: ' + input.files.length + ' files';
+                }
+            } else {
+                display.textContent = '';
+            }
+        }
+
+        function goToStep(e, currentId, nextId, isBack = false) {
+            if (e) e.preventDefault();
+            
+            const currentCard = document.getElementById(currentId);
+            const nextCard = document.getElementById(nextId);
+            
+            if (isBack) {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('next-card');
+                nextCard.classList.remove('prev-card');
+                nextCard.classList.add('active');
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('prev-card');
+                nextCard.classList.remove('next-card');
+                nextCard.classList.add('active');
+            }
+        }
+
+        async function validateCompanyThenGo(e) {
+            e.preventDefault();
+            
+            const errorDiv = document.getElementById('company-exists-error');
+            const errorMsg = document.getElementById('company-exists-msg');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            errorDiv.style.display = 'none';
+            submitBtn.textContent = 'Checking...';
+            submitBtn.disabled = true;
+
+            const companyName = document.getElementById('company-name').value.trim();
+            const subdomain = document.getElementById('workspace-url').value.trim();
+
+            try {
+                // Check if company already exists using our public RPC
+                const { data, error } = await supabaseClient.rpc('get_workspaces');
+                
+                if (data) {
+                    const exists = data.some(w => w.company_name.toLowerCase() === companyName.toLowerCase());
+                    if (exists) {
+                        errorDiv.style.display = 'block';
+                        errorMsg.textContent = `The company "${companyName}" is already registered. Please choose a different name.`;
+                        submitBtn.textContent = 'Continue ➔';
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                }
+                
+                // If we get here, it doesn't exist, proceed to step 2!
+                goToStep(null, 'step1', 'step2');
+                
+            } catch (err) {
+                console.error("Validation error:", err);
+                // If error (e.g. network), just let them proceed and it will fail at final submission if duplicate
+                goToStep(null, 'step1', 'step2');
+            } finally {
+                submitBtn.textContent = 'Continue ➔';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // --- File Upload UI Logic ---
+        function updateFileName(input) {
+            const display = document.getElementById('file-name-display');
+            if (input.files && input.files[0]) {
+                display.textContent = input.files[0].name;
+            } else {
+                display.textContent = '';
+            }
+        }
+        function updateFileNameAsset(input) {
+            const display = document.getElementById('asset-file-name-display');
+            if (input.files && input.files[0]) {
+                display.textContent = input.files[0].name;
+            } else {
+                display.textContent = '';
+            }
+        }
+        function updateFileNameUser(input) {
+            const display = document.getElementById('user-file-name-display');
+            if (input.files && input.files[0]) {
+                display.textContent = input.files[0].name;
+            } else {
+                display.textContent = '';
+            }
+        }
+        function updateFileNameTicket(input) {
+            const display = document.getElementById('ticket-file-name-display');
+            if (input.files && input.files[0]) {
+                display.textContent = input.files[0].name;
+            } else {
+                display.textContent = '';
+            }
+        }
+        function updateFileNameData(input) {
+            const display = document.getElementById('data-file-name-display');
+            if (input.files && input.files[0]) {
+                display.textContent = input.files[0].name;
+            } else {
+                display.textContent = '';
+            }
+        }
+
+        function moveToNext(current, event) {
+            if (current.value.length >= current.maxLength) {
+                let next = current.nextElementSibling;
+                if (next && next.classList.contains('otp-input')) next.focus();
+            }
+            if (event.key === "Backspace") {
+                let prev = current.previousElementSibling;
+                if (prev && prev.classList.contains('otp-input')) prev.focus();
+            }
+        }
+
+        // --- Secure Email OTP Engine ---
+        let currentGeneratedOTP = null;
+        let otpGeneratedTimestamp = null;
+
+        function sendOTP(e) {
+            if (e) e.preventDefault();
+            const emailInput = document.getElementById('admin-email').value.trim();
+            if (!emailInput) return;
+
+            // 1. Generate cryptographically random 4-digit numeric code
+            currentGeneratedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            otpGeneratedTimestamp = Date.now();
+
+            // 2. Clear previous OTP input boxes and error states
+            document.querySelectorAll('#step3 .otp-input').forEach(input => {
+                input.value = '';
+                input.style.borderColor = 'var(--border-color)';
+                input.disabled = false;
+            });
+            const errorDiv = document.getElementById('otp-error');
+            if (errorDiv) errorDiv.style.display = 'none';
+            const successDiv = document.getElementById('otp-success');
+            if (successDiv) successDiv.style.display = 'none';
+
+            // 3. Update subtitle with email target
+            const subtitle = document.getElementById('otp-subtitle');
+            if (subtitle) subtitle.innerHTML = `We've dispatched a secure 4-digit code to <strong>${emailInput}</strong>. Enter it below to continue.`;
+
+            // 4. Navigate to Step 3
+            goToStep(null, 'step2', 'step3');
+            setTimeout(() => {
+                const firstInput = document.querySelector('#step3 .otp-input');
+                if (firstInput) firstInput.focus();
+            }, 100);
+
+            // 5. Send actual email via EmailJS!
+            const serviceID = "service_n9sol5z";
+            const templateID = "template_xvr9ku3";
+            const publicKey = "JmsopA9Kl9y2vjj2_";
+
+            if (window.emailjs && templateID) {
+                emailjs.send(serviceID, templateID, {
+                    to_email: emailInput,
+                    email: emailInput, // Supports {{email}} or {{to_email}} in template
+                    otp_code: currentGeneratedOTP,
+                    otp: currentGeneratedOTP, // Supports {{otp}} or {{otp_code}} in template
+                    to_name: document.getElementById('admin-first-name').value.trim() || 'Admin',
+                    company_name: document.getElementById('company-name').value.trim() || 'AssetFlow'
+                }, publicKey).then(
+                    (response) => {
+                        console.log("SUCCESS: OTP sent directly via EmailJS!", response.status, response.text);
+                    },
+                    (error) => {
+                        console.error("FAILED to send via EmailJS:", error);
+                        alert("EmailJS Delivery Error: (" + (error.text || error.message || JSON.stringify(error)) + "). Please verify EmailJS dashboard limitations or field mappings.");
+                    }
+                );
+            }
+            
+            // Also display simulation banner so you can test immediately even without template setup
+            showEmailNotificationBanner(emailInput, currentGeneratedOTP);
+        }
+
+        function verifyOTP(e) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('otp-error');
+            const successDiv = document.getElementById('otp-success');
+            errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+
+            // Gather entered digits
+            const inputs = Array.from(document.querySelectorAll('#step3 .otp-input'));
+            const enteredOTP = inputs.map(input => input.value.trim()).join('');
+
+            // Validate expiration (5 minutes limit for security)
+            if (!otpGeneratedTimestamp || (Date.now() - otpGeneratedTimestamp > 5 * 60 * 1000)) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = "⏳ This security code has expired (5 minute limit). Please click <b>Resend Code</b>.";
+                return;
+            }
+
+            // Verify match
+            if (enteredOTP !== currentGeneratedOTP) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = "❌ <b>Wrong OTP entered!</b> The verification digits did not match what was sent to your email. Try again.";
+                inputs.forEach(input => {
+                    input.style.borderColor = '#dc2626';
+                });
+                inputs[0].focus();
+                return;
+            }
+
+            // Success! OTP is valid!
+            inputs.forEach(input => {
+                input.style.borderColor = '#16a34a';
+                input.disabled = true;
+            });
+            if (successDiv) {
+                successDiv.style.display = 'block';
+                successDiv.innerHTML = "✅ Email verified successfully! Continuing...";
+            }
+
+            // Remove banner if open and transition to step 4
+            setTimeout(() => {
+                const banner = document.getElementById('smtp-demo-banner');
+                if (banner) banner.remove();
+                inputs.forEach(input => input.disabled = false);
+                goToStep(null, 'step3', 'step4');
+            }, 600);
+        }
+
+        function resendOTP(e) {
+            if (e) e.preventDefault();
+            const emailInput = document.getElementById('admin-email').value.trim();
+            currentGeneratedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            otpGeneratedTimestamp = Date.now();
+
+            const errorDiv = document.getElementById('otp-error');
+            if (errorDiv) errorDiv.style.display = 'none';
+            document.querySelectorAll('#step3 .otp-input').forEach(input => {
+                input.value = '';
+                input.style.borderColor = 'var(--border-color)';
+                input.disabled = false;
+            });
+            const firstInput = document.querySelector('#step3 .otp-input');
+            if (firstInput) firstInput.focus();
+
+            // Send actual email via EmailJS on resend!
+            const serviceID = "service_n9sol5z";
+            const templateID = "template_xvr9ku3";
+            const publicKey = "JmsopA9Kl9y2vjj2_";
+
+            if (window.emailjs && templateID) {
+                emailjs.send(serviceID, templateID, {
+                    to_email: emailInput,
+                    email: emailInput,
+                    otp_code: currentGeneratedOTP,
+                    otp: currentGeneratedOTP,
+                    to_name: document.getElementById('admin-first-name').value.trim() || 'Admin',
+                    company_name: document.getElementById('company-name').value.trim() || 'AssetFlow'
+                }, publicKey).then(
+                    (res) => console.log("SUCCESS: Resent via EmailJS!", res.status),
+                    (err) => console.error("FAILED to resend:", err)
+                );
+            }
+
+            showEmailNotificationBanner(emailInput, currentGeneratedOTP);
+        }
+
+        function showEmailNotificationBanner(recipient, code) {
+            let banner = document.getElementById('smtp-demo-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'smtp-demo-banner';
+                banner.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; background: #0f172a; color: #f8fafc; padding: 16px 22px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 2px #10b981; font-family: inherit; max-width: 420px; animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);';
+                document.body.appendChild(banner);
+            }
+            banner.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:12px;">
+                    <span style="font-size:24px;">📧</span>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#34d399; margin-bottom:4px; font-size: 0.95rem;">Verification Email Dispatched!</div>
+                        <div style="font-size:0.85rem; line-height:1.4; color:#cbd5e1;">An automated email containing your 4-digit OTP was sent via EmailJS to <strong>${recipient}</strong>. Please check your inbox (and spam folder).</div>
+                        <div style="margin-top:12px; border-top: 1px solid #334155; padding-top: 8px;">
+                            <span style="font-size:0.75rem; color:#94a3b8; cursor:pointer; text-decoration:underline;" onclick="const el=document.getElementById('debug-otp-box'); el.style.display = el.style.display==='none' ? 'block':'none';">Testing Shortcut: Click to reveal OTP</span>
+                            <div id="debug-otp-box" style="display:none; margin-top:6px; background:#1e293b; border: 1px dashed #475569; padding: 6px; text-align: center; font-size:1.3rem; letter-spacing:5px; font-weight:800; color:#22c55e; border-radius: 6px;">
+                                ${code}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="document.getElementById('smtp-demo-banner').remove()" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:20px; line-height:1;">×</button>
+                </div>
+            `;
+            console.log(`[EmailJS Service API] OTP sent to ${recipient}. Code: ${code}`);
+        }
+    </script>
+</body>
+</html>

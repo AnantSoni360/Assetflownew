@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssetFlow - IT Asset Management Workspace</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">
+            <span class="icon">🌿</span> AssetFlow
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">Features</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <a href="login.html" class="btn btn-login" style="text-decoration: none;">Login</a>
+            <a href="create-workspace.html" class="btn btn-signup" style="text-decoration: none;">Create Workspace</a>
+        </div>
+    </nav>
+
+    <!-- Home Section (Hero) -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Unified Workspace for IT Asset Management</h1>
+            <p>Create a dedicated workspace for your company. Empower your team with customized screens for Super Admins, Admins, Engineers, and Employees to seamlessly handle IT assets and resolve tickets.</p>
+            <div class="hero-actions">
+                <a href="#about" class="btn btn-primary">Explore Features</a>
+                <a href="#contact" class="btn btn-secondary">Contact Sales</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="abstract-shape"></div>
+            <div class="glass-card">
+                <h3>Workspace Activity</h3>
+                <div class="ticket-item">
+                    <span class="dot green"></span> Employee: Raised Ticket #1042
+                </div>
+                <div class="ticket-item">
+                    <span class="dot green"></span> Admin: Assigned to Engineer
+                </div>
+                <div class="ticket-item">
+                    <span class="dot green"></span> Engineer: Repair in Progress
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="section-header">
+            <h2>Role-Based Dashboards</h2>
+            <p>Dedicated screens designed for every level of your organization.</p>
+        </div>
+        <div class="about-grid">
+            <div class="about-card">
+                <div class="card-icon">👑</div>
+                <h3>Super Admins & Admins</h3>
+                <p>Set up your company workspace and oversee all IT operations. Manage the complete lifecycle of assets, track spare parts, and assign incoming tickets to engineers effortlessly.</p>
+            </div>
+            <div class="about-card">
+                <div class="card-icon">👤</div>
+                <h3>Employees</h3>
+                <p>Log into your personalized screen to view assigned company assets. Quickly raise service requests for laptops or peripherals and track resolution progress in real-time.</p>
+            </div>
+            <div class="about-card">
+                <div class="card-icon">🔧</div>
+                <h3>Service Engineers</h3>
+                <p>Access your dedicated ticket queue. Update repair statuses, request necessary spare parts, and close resolved tickets to ensure minimal downtime for the company.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="contact-container">
+            <div class="contact-info">
+                <h2>Ready to streamline your IT operations?</h2>
+                <p>Get in touch to learn how our multi-role workspace can organize your assets and ticketing system.</p>
+                <ul class="contact-details">
+                    <li>📧 support@assetflow.com</li>
+                    <li>📞 +1 (555) 123-4567</li>
+                    <li>🏢 123 Innovation Drive, Tech City</li>
+                </ul>
+            </div>
+            <div class="contact-form">
+                <form onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <label for="name">Company Name</label>
+                        <input type="text" id="name" placeholder="Acme Corp">
+                    </div>
+                    <div class="input-group">
+                        <label for="email">Work Email</label>
+                        <input type="email" id="email" placeholder="admin@company.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" rows="4" placeholder="How many employees do you have?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary submit-btn">Request Demo</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 AssetFlow. All rights reserved.</p>
+    </footer>
+</body>
+</html>

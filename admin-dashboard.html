@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AssetFlow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="logo">
+                <span class="icon">🌿</span> AssetFlow
+            </a>
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-item active" onclick="switchTab('overview')" id="tab-overview">
+                <span>📊</span> Overview
+            </div>
+            <div class="menu-item" onclick="switchTab('tickets')" id="tab-tickets">
+                <span>🎫</span> Tickets
+            </div>
+            <div class="menu-item" onclick="switchTab('assets')" id="tab-assets">
+                <span>💻</span> Assets
+            </div>
+            <div class="menu-item" onclick="switchTab('users')" id="tab-users">
+                <span>👥</span> Users
+            </div>
+        </div>
+
+        <div class="user-profile-section">
+            <div class="avatar" id="user-avatar">A</div>
+            <div class="user-info">
+                <div class="user-name" id="sidebar-user-name">Loading...</div>
+                <div class="user-role" id="sidebar-company-name">Loading...</div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="logout()" style="padding: 0.25rem 0.5rem; border: none; font-size: 1rem;" title="Logout">🚪</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-title" id="header-title">Overview</div>
+        </header>
+
+        <!-- Overview Pane -->
+        <div class="content-pane active" id="pane-overview">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Total Assets</div>
+                    <div class="stat-value" id="stat-assets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Users</div>
+                    <div class="stat-value" id="stat-users">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Open Tickets</div>
+                    <div class="stat-value" id="stat-tickets">0</div>
+                </div>
+            </div>
+            <div class="welcome-banner">
+                <h3>Welcome to your Dashboard</h3>
+                <p>Use the sidebar to manage your company's assets, tickets, and personnel.</p>
+            </div>
+            
+            <!-- Dashboard Widgets Grid -->
+            <div class="dashboard-widgets">
+                <!-- Left: Chart -->
+                <div class="widget-card">
+                    <h4 class="widget-title">Ticket Status Distribution</h4>
+                    <div class="chart-container">
+                        <canvas id="ticketStatusChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Right: Action Items & Notifications -->
+                <div class="widget-column">
+                    <div class="widget-card widget-action">
+                        <h4 class="widget-title">Smart To-Do List</h4>
+                        <div id="todo-list" class="action-list">
+                            <div class="empty-state">Loading tasks...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="widget-card widget-action">
+                        <h4 class="widget-title">Recent Ticket Activity</h4>
+                        <div id="notification-list" class="notification-list">
+                            <div class="empty-state">Loading activity...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Pane -->
+        <div class="content-pane" id="pane-tickets">
+            <div class="table-container">
+                <div class="table-header" style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem;">
+                    <h3 style="margin:0;">Support Tickets</h3>
+                    
+                    <div class="controls-panel">
+                        <div class="search-box">
+                            <span>🔍</span>
+                            <input type="text" id="ticket-search" placeholder="Search ID, Issue, or Email..." onkeyup="filterTickets()">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select id="ticket-status-filter" class="modern-select" onchange="filterTickets()">
+                                <option value="All">All Statuses</option>
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                            
+                            <select id="ticket-priority-filter" class="modern-select" onchange="filterTickets()">
+                                <option value="All">All Priorities</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            
+                            <button class="btn btn-secondary btn-small filter-pill" id="filter-unassigned" onclick="toggleUnassignedFilter()">Unassigned</button>
+                        </div>
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Issue & Description</th>
+                            <th>Reported By</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned To</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-table-body">
+                        <tr><td colspan="6" style="text-align: center;">Loading tickets...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Assets Pane -->
+        <div class="content-pane" id="pane-assets">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 style="margin:0;">Company Assets</h3>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Asset Tag</th>
+                            <th>Type</th>
+                            <th>Brand & Model</th>
+                            <th>Serial Number</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Purchase Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-table-body">
+                        <tr><td colspan="7" style="text-align: center;">Loading assets...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Users Pane -->
+        <div class="content-pane" id="pane-users">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 style="margin:0;">Personnel</h3>
+                    <button class="btn btn-primary btn-small btn-animated" onclick="openAddUserModal()">+ Add User</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Department</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <tr><td colspan="4" style="text-align: center;">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin:0;">Add New User</h3>
+                <button class="close-modal" onclick="closeAddUserModal()">×</button>
+            </div>
+            
+            <!-- Error Alert -->
+            <div class="error-alert" id="add-user-error" style="display: none; background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                <p id="add-user-error-msg" style="color: #b91c1c; margin: 0; font-size: 0.9rem;">Error</p>
+            </div>
+
+            <form id="add-user-form">
+                <div style="display:flex; gap:1rem;">
+                    <div class="input-group" style="flex:1;">
+                        <label>First Name</label>
+                        <input type="text" id="new-user-first" required>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>Last Name</label>
+                        <input type="text" id="new-user-last" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="new-user-email" required>
+                </div>
+                <div class="input-group">
+                    <label>Temporary Password</label>
+                    <input type="text" id="new-user-password" value="Temp1234!" required>
+                </div>
+                <div class="input-group">
+                    <label>Role</label>
+                    <select id="new-user-role" required>
+                        <option value="Employee">Employee</option>
+                        <option value="Engineer">Engineer</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Department</label>
+                    <input type="text" id="new-user-dept" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create User</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

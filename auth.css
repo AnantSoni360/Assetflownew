@@ -1,0 +1,280 @@
+/* Auth Pages Specific Styles */
+
+.auth-page {
+    background-color: var(--bg-offwhite);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.auth-nav {
+    width: 100%;
+    padding: 1.5rem 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    z-index: 10;
+}
+
+.auth-nav .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-nav .back-link {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.auth-nav .back-link:hover {
+    color: var(--text-dark);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 500px;
+    margin-top: 5vh;
+    position: relative;
+}
+
+/* Card Slider Animation Framework */
+.card-slider {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+}
+
+.step-card {
+    background: var(--bg-white);
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(50px) scale(0.95);
+}
+
+/* State: Active (Visible in center) */
+.step-card.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0) scale(1);
+    z-index: 2;
+}
+
+/* State: Previous (Moved out to left) */
+.step-card.prev-card {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50px) scale(0.95);
+    z-index: 1;
+}
+
+/* State: Next (Waiting on right) */
+.step-card.next-card {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(50px) scale(0.95);
+    z-index: 1;
+}
+
+/* Card Content Styling */
+.step-indicator {
+    color: var(--primary-green);
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+.step-card h2 {
+    font-size: 2rem;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.step-card .subtitle {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+/* File Upload Box */
+.file-upload-box {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: var(--bg-offwhite);
+}
+
+.file-upload-box:hover {
+    border-color: var(--primary-green);
+    background-color: rgba(16, 185, 129, 0.05);
+}
+
+.upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.file-upload-box p {
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.upload-hint {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.file-name {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--primary-green);
+    font-weight: 600;
+}
+
+.btn-animated {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+}
+
+.auth-btn {
+    width: 100%;
+    font-size: 1.1rem;
+    margin-top: 2rem;
+    border-radius: 12px;
+}
+
+/* OTP Input Styles */
+.otp-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    margin: 2rem 0;
+    width: 100%;
+}
+
+.otp-input {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    flex: 0 0 60px;
+    padding: 0 !important;
+    text-align: center !important;
+    font-size: 1.5rem !important;
+    font-weight: 800;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--bg-offwhite);
+    color: var(--text-dark);
+    transition: all 0.3s;
+}
+
+.otp-input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    background-color: var(--bg-white);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--light-green);
+    border-top-color: var(--primary-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.loading-subtext {
+    color: var(--text-light);
+    margin-top: 0.5rem;
+}
+
+/* Error Alert */
+.error-alert {
+    background-color: #fee2e2;
+    border-left: 4px solid #ef4444;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: none;
+}
+
+.error-alert.active {
+    display: block;
+}
+
+.error-alert h4 {
+    color: #b91c1c;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.error-alert p {
+    color: #991b1b;
+    font-size: 0.9rem;
+    margin: 0;
+}
