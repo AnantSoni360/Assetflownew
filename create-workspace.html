@@ -136,11 +136,17 @@
                 <h2>Secure your account</h2>
                 <p class="subtitle">Create a strong password for your Super Admin account.</p>
                 
-                <form onsubmit="goToStep(event, 'step4', 'step5')">
+                <!-- Error Alert -->
+                <div class="error-alert" id="pw-error" style="display: none; background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                    <h4 style="color: #991b1b; margin: 0 0 0.5rem 0; font-size: 1rem;">Password Mismatch</h4>
+                    <p id="pw-error-msg" style="color: #b91c1c; margin: 0; font-size: 0.9rem; line-height: 1.4;">The password and confirm password do not match!</p>
+                </div>
+
+                <form onsubmit="validateAdminPasswordThenGo(event)">
                     <div class="input-group">
                         <label for="password">New Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" placeholder="••••••••" required>
+                            <input type="password" id="password" placeholder="••••••••" required oninput="document.getElementById('pw-error').style.display='none'; this.style.borderColor='var(--border-color)'; document.getElementById('confirm-password').style.borderColor='var(--border-color)';">
                             <button type="button" class="toggle-password-btn" onclick="togglePassword('password', 'toggle-icon-pw1')">
                                 <span id="toggle-icon-pw1">👁️</span>
                             </button>
@@ -150,7 +156,7 @@
                     <div class="input-group">
                         <label for="confirm-password">Confirm Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="confirm-password" placeholder="••••••••" required>
+                            <input type="password" id="confirm-password" placeholder="••••••••" required oninput="document.getElementById('pw-error').style.display='none'; this.style.borderColor='var(--border-color)'; document.getElementById('password').style.borderColor='var(--border-color)';">
                             <button type="button" class="toggle-password-btn" onclick="togglePassword('confirm-password', 'toggle-icon-pw2')">
                                 <span id="toggle-icon-pw2">👁️</span>
                             </button>
@@ -176,11 +182,17 @@
                     </p>
                 </div>
 
-                <form onsubmit="goToStep(event, 'step5', 'step6')">
+                <!-- Error Alert -->
+                <div class="error-alert" id="temp-pw-error" style="display: none; background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                    <h4 style="color: #991b1b; margin: 0 0 0.5rem 0; font-size: 1rem;">Temporary Password Mismatch</h4>
+                    <p id="temp-pw-error-msg" style="color: #b91c1c; margin: 0; font-size: 0.9rem; line-height: 1.4;">The temporary password and confirm temporary password must be identical!</p>
+                </div>
+
+                <form onsubmit="validateTempPasswordThenGo(event)">
                     <div class="input-group">
                         <label for="temp-password">Temporary Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="temp-password" placeholder="••••••••" required>
+                            <input type="password" id="temp-password" placeholder="••••••••" required oninput="document.getElementById('temp-pw-error').style.display='none'; this.style.borderColor='var(--border-color)'; document.getElementById('confirm-temp-password').style.borderColor='var(--border-color)';">
                             <button type="button" class="toggle-password-btn" onclick="togglePassword('temp-password', 'toggle-icon-pw3')">
                                 <span id="toggle-icon-pw3">👁️</span>
                             </button>
@@ -190,7 +202,7 @@
                     <div class="input-group">
                         <label for="confirm-temp-password">Confirm Temporary Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="confirm-temp-password" placeholder="••••••••" required>
+                            <input type="password" id="confirm-temp-password" placeholder="••••••••" required oninput="document.getElementById('temp-pw-error').style.display='none'; this.style.borderColor='var(--border-color)'; document.getElementById('temp-password').style.borderColor='var(--border-color)';">
                             <button type="button" class="toggle-password-btn" onclick="togglePassword('confirm-temp-password', 'toggle-icon-pw4')">
                                 <span id="toggle-icon-pw4">👁️</span>
                             </button>
@@ -599,6 +611,62 @@
                 submitBtn.textContent = 'Continue ➔';
                 submitBtn.disabled = false;
             }
+        }
+
+        function validateAdminPasswordThenGo(e) {
+            e.preventDefault();
+            const pw = document.getElementById('password');
+            const confirmPw = document.getElementById('confirm-password');
+            const errorDiv = document.getElementById('pw-error');
+            const errorMsg = document.getElementById('pw-error-msg');
+
+            if (errorDiv) errorDiv.style.display = 'none';
+            pw.style.borderColor = 'var(--border-color)';
+            confirmPw.style.borderColor = 'var(--border-color)';
+
+            if (pw.value !== confirmPw.value) {
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorMsg.innerHTML = "❌ <b>Passwords do not match!</b> The confirmation password you typed does not match the new password. Please double-check and enter the exact same password in both fields.";
+                }
+                pw.style.borderColor = '#dc2626';
+                confirmPw.style.borderColor = '#dc2626';
+                confirmPw.focus();
+                return;
+            }
+
+            // Validated! Advance to Step 5
+            pw.style.borderColor = '#16a34a';
+            confirmPw.style.borderColor = '#16a34a';
+            goToStep(null, 'step4', 'step5');
+        }
+
+        function validateTempPasswordThenGo(e) {
+            e.preventDefault();
+            const tempPw = document.getElementById('temp-password');
+            const confirmTempPw = document.getElementById('confirm-temp-password');
+            const errorDiv = document.getElementById('temp-pw-error');
+            const errorMsg = document.getElementById('temp-pw-error-msg');
+
+            if (errorDiv) errorDiv.style.display = 'none';
+            tempPw.style.borderColor = 'var(--border-color)';
+            confirmTempPw.style.borderColor = 'var(--border-color)';
+
+            if (tempPw.value !== confirmTempPw.value) {
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorMsg.innerHTML = "❌ <b>Temporary passwords do not match!</b> The confirmation password is different from the temporary team password. Both fields must contain exactly the same password so employees can log in smoothly.";
+                }
+                tempPw.style.borderColor = '#dc2626';
+                confirmTempPw.style.borderColor = '#dc2626';
+                confirmTempPw.focus();
+                return;
+            }
+
+            // Validated! Advance to Step 6
+            tempPw.style.borderColor = '#16a34a';
+            confirmTempPw.style.borderColor = '#16a34a';
+            goToStep(null, 'step5', 'step6');
         }
 
         // --- File Upload UI Logic ---
