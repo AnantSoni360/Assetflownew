@@ -31,6 +31,9 @@
             <div class="menu-item" onclick="switchTab('assets', this)" id="tab-assets">
                 <span>💻</span> My Assets
             </div>
+            <div class="menu-item" onclick="openPasswordModal()">
+                <span>⚙️</span> Settings
+            </div>
         </div>
 
         <div class="user-profile-section">
@@ -39,6 +42,7 @@
                 <div class="user-name" id="user-name-display">Loading...</div>
                 <div class="user-role" id="user-role-display">Employee</div>
             </div>
+            <button class="btn btn-secondary btn-small" onclick="openPasswordModal()" style="padding: 0.25rem 0.5rem; border: none; font-size: 1.1rem; background: transparent; cursor: pointer; color: var(--text-light);" title="Account Settings (Change Password)">⚙️</button>
             <button class="btn btn-secondary btn-small" onclick="logout()" style="padding: 0.25rem 0.5rem; border: none; font-size: 1rem;" title="Logout">🚪</button>
         </div>
     </nav>
@@ -159,6 +163,49 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%;" id="submit-ticket-btn">Submit Ticket</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="change-password-modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-weight: 700; color: var(--text-main);">⚙️ Account Settings</h3>
+                <button class="close-modal" onclick="closePasswordModal()">&times;</button>
+            </div>
+
+            <!-- Error Notification -->
+            <div id="pw-change-error" style="display: none; background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1.25rem; border-radius: 8px;">
+                <h4 style="color: #991b1b; margin: 0 0 0.25rem 0; font-size: 0.95rem;">Error</h4>
+                <p id="pw-change-error-msg" style="color: #b91c1c; margin: 0; font-size: 0.85rem; line-height: 1.4;"></p>
+            </div>
+
+            <!-- Success Notification -->
+            <div id="pw-change-success" style="display: none; background-color: #dcfce7; border-left: 4px solid #16a34a; padding: 1rem; margin-bottom: 1.25rem; border-radius: 8px;">
+                <p style="color: #15803d; margin: 0; font-size: 0.9rem; font-weight: 600;">✅ Password changed successfully! You must use this new password next time you log in.</p>
+            </div>
+
+            <form id="change-password-form" onsubmit="handlePasswordChange(event)">
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-weight: 600; color: var(--text-main);">Current Password</label>
+                    <input type="password" id="current-password-input" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="Enter your existing password..." required oninput="document.getElementById('pw-change-error').style.display='none';">
+                </div>
+                
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-weight: 600; color: var(--text-main);">New Password</label>
+                    <input type="password" id="new-password-input" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="At least 6 characters..." required oninput="document.getElementById('pw-change-error').style.display='none';">
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-weight: 600; color: var(--text-main);">Confirm New Password</label>
+                    <input type="password" id="confirm-new-password-input" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="Re-enter new password..." required oninput="document.getElementById('pw-change-error').style.display='none';">
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" style="flex: 1; padding: 0.75rem;" onclick="closePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 0.75rem;" id="save-password-btn">Save New Password</button>
+                </div>
             </form>
         </div>
     </div>

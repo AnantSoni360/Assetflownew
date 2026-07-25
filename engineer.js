@@ -253,3 +253,140 @@ window.onload = () => {
         })
         .subscribe();
 };
+
+// ==========================================
+// ACCOUNT SETTINGS: CHANGE PASSWORD ENGINE
+// ==========================================
+function openPasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    if (modal) {
+        document.getElementById('current-password-input').value = '';
+        document.getElementById('new-password-input').value = '';
+        document.getElementById('confirm-new-password-input').value = '';
+        document.getElementById('pw-change-error').style.display = 'none';
+        document.getElementById('pw-change-success').style.display = 'none';
+        modal.classList.add('active');
+        document.getElementById('current-password-input').focus();
+    }
+}
+
+function closePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    const currentPw = document.getElementById('current-password-input').value.trim();
+    const newPw = document.getElementById('new-password-input').value.trim();
+    const confirmNewPw = document.getElementById('confirm-new-password-input').value.trim();
+    
+    const errorDiv = document.getElementById('pw-change-error');
+    const errorMsg = document.getElementById('pw-change-error-msg');
+    const successDiv = document.getElementById('pw-change-success');
+    const saveBtn = document.getElementById('save-password-btn');
+
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+
+    // 1. Validate password length and matching
+    if (newPw.length < 6) {
+        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'For security, your new password must be at least 6 characters long.';
+        return;
+    }
+
+    if (newPw !== confirmNewPw) {
+        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'New Password and Confirm New Password do not match! Please enter the exact same password in both fields.';
+        return;
+    }
+
+    if (currentPw === newPw) {
+        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'Your new password cannot be exactly the same as your current password!';
+        return;
+    }
+
+    if (!currentUser || !currentUser.id || !currentUser.workspace_id) {
+        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'User session error. Please log in again to change your password.';
+        return;
+    }
+
+    // 2. Perform backend verification and update in Supabase
+    saveBtn.textContent = 'Verifying & Updating...';
+    saveBtn.disabled = true;
+
+    try {
+        // First attempt using custom secure RPC
+        const { data: rpcSuccess, error: rpcErr } = await supabaseClient.rpc('change_user_password', {
+            p_user_id: currentUser.id,
+            p_workspace_id: currentUser.workspace_id,
+            p_current_password: currentPw,
+            p_new_password: newPw
+        });
+
+        if (!rpcErr && rpcSuccess === false) {
+            errorDiv.style.display = 'block';
+            errorMsg.textContent = '❌ Incorrect Current Password! The current password you entered does not match your active account password in Supabase.';
+            saveBtn.textContent = 'Save New Password';
+            saveBtn.disabled = false;
+            return;
+        }
+
+        if (rpcErr || rpcSuccess === undefined) {
+            // Fallback to direct table query (works automatically without requiring manual SQL creation)
+            const { data: userData, error: fetchErr } = await supabaseClient
+                .from('users')
+                .select('id, password')
+                .eq('id', currentUser.id)
+                .eq('workspace_id', currentUser.workspace_id)
+                .single();
+
+            if (fetchErr || !userData) {
+                throw new Error(fetchErr ? fetchErr.message : 'Could not locate your user record in Supabase.');
+            }
+
+            if (userData.password !== currentPw) {
+                errorDiv.style.display = 'block';
+                errorMsg.textContent = '❌ Incorrect Current Password! The current password you entered does not match your active account password in Supabase.';
+                saveBtn.textContent = 'Save New Password';
+                saveBtn.disabled = false;
+                return;
+            }
+
+            // Perform Supabase update!
+            const { error: updateErr } = await supabaseClient
+                .from('users')
+                .update({ password: newPw })
+                .eq('id', currentUser.id)
+                .eq('workspace_id', currentUser.workspace_id);
+
+            if (updateErr) {
+                throw new Error(updateErr.message);
+            }
+        }
+
+        // 3. Update Success!
+        successDiv.style.display = 'block';
+        document.getElementById('current-password-input').value = '';
+        document.getElementById('new-password-input').value = '';
+        document.getElementById('confirm-new-password-input').value = '';
+        
+        console.log(`[Supabase Auth] Password successfully updated for ${currentUser.email} in workspace ${currentUser.workspace_id}`);
+
+        setTimeout(() => {
+            closePasswordModal();
+            alert("🔒 Your password has been updated in Supabase! Your old password no longer works; please use your new password next time you log in.");
+        }, 1500);
+
+    } catch (err) {
+        console.error("Password change failure:", err);
+        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'Failed to update password: ' + (err.message || err);
+    } finally {
+        saveBtn.textContent = 'Save New Password';
+        saveBtn.disabled = false;
+    }
+}

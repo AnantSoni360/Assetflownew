@@ -336,6 +336,38 @@ BEGIN
         RAISE EXCEPTION 'Unauthorized or not an Engineer';
     END IF;
 END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ==========================================
+-- 19. Change User Password RPC
+-- ==========================================
+CREATE OR REPLACE FUNCTION change_user_password(
+    p_user_id UUID,
+    p_workspace_id UUID,
+    p_current_password TEXT,
+    p_new_password TEXT
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- 1. Check if user exists in the specified workspace WITH the exact current password
+    SELECT id INTO v_user_id
+    FROM users
+    WHERE id = p_user_id 
+      AND workspace_id = p_workspace_id 
+      AND password = p_current_password;
+      
+    IF v_user_id IS NULL THEN
+        -- Current password did not match! Return false
+        RETURN FALSE;
+    END IF;
+
+    -- 2. Update to the new password
+    UPDATE users
+    SET password = p_new_password
+    WHERE id = p_user_id AND workspace_id = p_workspace_id;
+    
+    RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
