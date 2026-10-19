@@ -1,0 +1,17 @@
+Asset_Name,Asset_Type,Serial_Number,Status,Assigned_To_Email
+Dell XPS 15 9530,Laptop,APX-DL-9821,Assigned,alice.cooper@apextech.com
+MacBook Pro 14 M3,Laptop,APX-MB-4029,Assigned,liam.smith@apextech.com
+Lenovo ThinkPad T14,Laptop,APX-TP-1104,Assigned,priya.patel@apextech.com
+HP EliteBook 840 G10,Laptop,APX-HP-5521,Assigned,james.wilson@apextech.com
+MacBook Air 15 M2,Laptop,APX-MA-7731,Assigned,sophia.taylor@apextech.com
+Dell Precision 5680,Laptop,APX-DP-8832,Assigned,maya.lin@apextech.com
+Lenovo ThinkPad X1 Carbon,Laptop,APX-TP-2291,Assigned,noah.brown@apextech.com
+Dell UltraSharp 27 4K,Monitor,APX-MN-3310,Assigned,liam.smith@apextech.com
+LG 34 Curved Ultrawide,Monitor,APX-MN-9921,Assigned,maya.lin@apextech.com
+Apple Studio Display 27,Monitor,APX-MN-1120,Available,
+ThinkPad Universal Thunderbolt 4 Dock,Accessory,APX-DK-4481,Assigned,priya.patel@apextech.com
+Cisco Catalyst 1000 Switch,Network,APX-SW-6620,Assigned,david.chen@apextech.com
+Synology RackStation RS2423+,Storage,APX-NS-2024,Assigned,carlos.mendez@apextech.com
+Dell XPS 13 Plus,Laptop,APX-DL-3349,Available,
+Logitech MX Master 3S Mouse,Accessory,APX-MS-8812,Available,
+Brother MFC-L8905CDW Printer,Printer,APX-PR-1029,Assigned,marcus.vance@apextech.com

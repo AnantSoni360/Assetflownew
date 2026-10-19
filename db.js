@@ -1,6 +1,6 @@
 // Initialize Supabase Client
-const supabaseUrl = 'https://nphdpclywjsmqowbvegy.supabase.co';
-const supabaseKey = 'sb_publishable_z-wkJgi8fRnyUblLwyu-Fg_v5TlVaG_';
+const supabaseUrl = 'https://vclwchoyxjbkekmqmkbz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbHdjaG95eGpia2VrbXFta2J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzOTIyNTcsImV4cCI6MjEwNzk2ODI1N30.WucmtpvrwrPAEsHoVbFTmAFUlmdv5NUudiwvI6lF9p8';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // Define Expected Templates

@@ -1,0 +1,11 @@
+Title,Description,Priority,Status,Requested_By_Email,Assigned_To_Email
+MacBook Display Flickering,Screen flashes green horizontal lines intermittently when waking from sleep.,Critical,In Progress,liam.smith@apextech.com,david.chen@apextech.com
+VPN Connection Dropping,GlobalProtect corporate VPN terminates every 10 minutes with session timeout error.,High,Open,alice.cooper@apextech.com,
+RAM Upgrade Request,Need 32GB memory upgrade for local Docker containers and virtualization workloads.,Medium,Open,maya.lin@apextech.com,
+Password Reset - Payroll Portal,Account locked after 3 incorrect attempts. Need urgent unlock for month-end processing.,High,Resolved,james.wilson@apextech.com,sarah.jenkins@apextech.com
+External Monitor No Signal,Dell UltraSharp 27 does not detect HDMI or USB-C input from dock.,Medium,In Progress,priya.patel@apextech.com,sarah.jenkins@apextech.com
+Laptop Spilled Coffee / Won't Power,Accidentally spilled coffee on keyboard. Machine shut down immediately and will not turn back on.,Critical,Open,sophia.taylor@apextech.com,
+New Software License: Figma Pro,Requesting design team seat license provisioned for upcoming Q4 sprint.,Low,Closed,liam.smith@apextech.com,david.chen@apextech.com
+Slack Desktop App Crashing,Slack client crashes on Windows boot with memory exception error 0x80004005.,Low,Resolved,noah.brown@apextech.com,carlos.mendez@apextech.com
+Docking Station USB Ports Unresponsive,Keyboard and mouse lag and disconnect randomly when connected to Thunderbolt dock.,Medium,Open,priya.patel@apextech.com,
+Wi-Fi 6 Certificate Renewal,Corporate 802.1X Wi-Fi network profile showing expired authentication certificate.,Critical,In Progress,david.chen@apextech.com,carlos.mendez@apextech.com
